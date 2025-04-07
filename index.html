@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Traffic Violation Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-blue-400">
+                <i class="fas fa-traffic-light mr-2"></i> Smart Traffic Violation Detection
+            </h1>
+            <p class="text-gray-400">Real-time monitoring system</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Video Feed Section -->
+            <div class="lg:col-span-2 bg-gray-800 rounded-lg p-4 relative">
+                <div class="aspect-w-16 aspect-h-9 relative">
+                    <video id="cameraFeed" autoplay playsinline class="w-full h-full rounded-lg"></video>
+                    <canvas id="overlayCanvas" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
+                    <div id="speedOverlay" class="absolute top-4 left-4 bg-black bg-opacity-70 px-3 py-1 rounded text-yellow-400 font-mono"></div>
+                                        <!-- Red Line Visualization -->
+                    <div class="detection-line" style="top: 60%"></div>
+                    <div class="detection-label" style="top: calc(60% - 24px)">
+                        <i class="fas fa-exclamation-triangle mr-1"></i> DETECTION LINE
+                    </div>
+                    <!-- End Red Line Visualization -->
+
+                </div>
+                <div class="mt-4 flex space-x-4">
+                    <button id="startBtn" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded flex items-center">
+                        <i class="fas fa-play mr-2"></i> Start
+                    </button>
+                    <button id="stopBtn" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded flex items-center">
+                        <i class="fas fa-stop mr-2"></i> Stop
+                    </button>
+                </div>
+            </div>
+
+            <!-- Violation Alerts Section -->
+            <div class="bg-gray-800 rounded-lg p-4 overflow-y-auto max-h-96">
+                <h2 class="text-xl font-semibold mb-4 text-red-400">
+                    <i class="fas fa-exclamation-triangle mr-2"></i> Violation Alerts
+                </h2>
+                <div id="alertsContainer" class="space-y-3">
+                    <!-- Alerts will be dynamically inserted here -->
+                    <div class="text-center text-gray-500 py-8">
+                        <i class="fas fa-traffic-light text-4xl mb-2"></i>
+                        <p>No violations detected yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-gray-800 rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-900 text-blue-400 mr-4">
+                        <i class="fas fa-car text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-400">Vehicles Detected</p>
+                        <p id="vehicleCount" class="text-2xl font-bold">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-800 rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-red-900 text-red-400 mr-4">
+                        <i class="fas fa-exclamation text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-400">Total Violations</p>
+                        <p id="violationCount" class="text-2xl font-bold">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-800 rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-900 text-green-400 mr-4">
+                        <i class="fas fa-clock text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-400">System Uptime</p>
+                        <p id="uptime" class="text-2xl font-bold">00:00:00</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
