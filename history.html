@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Violation History | Smart Traffic System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-blue-400">
+                    <i class="fas fa-history mr-2"></i> Violation History
+                </h1>
+                <p class="text-gray-400">Recorded traffic violations</p>
+            </div>
+            <a href="index.html" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+            </a>
+        </header>
+
+        <div class="bg-gray-800 rounded-lg p-4">
+            <div class="flex justify-between items-center mb-4">
+                <div class="relative w-64">
+                    <input type="text" id="searchInput" placeholder="Search violations..." 
+                           class="w-full bg-gray-700 border border-gray-600 rounded pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+                <button id="exportBtn" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded flex items-center">
+                    <i class="fas fa-file-export mr-2"></i> Export CSV
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-700">
+                    <thead>
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Timestamp</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Details</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="violationsTable" class="bg-gray-800 divide-y divide-gray-700">
+                        <!-- Violations will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="noViolations" class="text-center py-12 text-gray-500">
+                <i class="fas fa-clipboard-list text-4xl mb-4"></i>
+                <p>No violations recorded yet</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load violations from localStorage
+        function loadViolations() {
+            const violations = JSON.parse(localStorage.getItem('trafficViolations') || '[]');
+            const tableBody = document.getElementById('violationsTable');
+            const noViolationsDiv = document.getElementById('noViolations');
+            
+            tableBody.innerHTML = '';
+            
+            if (violations.length === 0) {
+                noViolationsDiv.classList.remove('hidden');
+                return;
+            }
+            
+            noViolationsDiv.classList.add('hidden');
+            
+            violations.forEach((violation, index) => {
+                const row = document.createElement('tr');
+                row.className = index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-750';
+                
+                const date = new Date(violation.timestamp);
+                const formattedDate = date.toLocaleString();
+                
+                let details = '';
+                if (violation.type === 'speeding') {
+                    details = `Speed: ${violation.speed} km/h`;
+                }
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${formattedDate}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${violation.type === 'speeding' ? 'bg-red-900 text-red-100' : 'bg-yellow-900 text-yellow-100'}">
+                            ${violation.type}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">${details}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-900 text-blue-100">
+                            Recorded
+                        </span>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Export violations to CSV
+        function exportToCSV() {
+            const violations = JSON.parse(localStorage.getItem('trafficViolations') || '[]');
+            
+            if (violations.length === 0) {
+                alert('No violations to export');
+                return;
+            }
+            
+            let csv = 'Timestamp,Type,Details\n';
+            
+            violations.forEach(violation => {
+                const date = new Date(violation.timestamp);
+                const formattedDate = date.toLocaleString();
+                
+                let details = '';
+                if (violation.type === 'speeding') {
+                    details = `Speed: ${violation.speed} km/h`;
+                }
+                
+                csv += `"${formattedDate}","${violation.type}","${details}"\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `traffic_violations_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // Search violations
+        function searchViolations() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.getElementById('violationsTable').getElementsByTagName('tr');
+            
+            for (let row of rows) {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('exportBtn').addEventListener('click', exportToCSV);
+        document.getElementById('searchInput').addEventListener('input', searchViolations);
+        
+        // Generate PDF report
+        async function generatePDF() {
+            const violations = JSON.parse(localStorage.getItem('trafficViolations') || '[]');
+            
+            if (violations.length === 0) {
+                alert('No violations to export');
+                return;
+            }
+            
+            const doc = new jsPDF();
+            
+            // Add title
+            doc.setFontSize(18);
+            doc.text('Traffic Violation Report', 105, 15, null, null, 'center');
+            
+            // Add date
+            doc.setFontSize(10);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 22, null, null, 'center');
+            
+            let y = 30;
+            violations.forEach((violation, index) => {
+                // Add page if needed
+                if (y > 250) {
+                    doc.addPage();
+                    y = 20;
+                }
+                
+                // Violation header
+                doc.setFontSize(12);
+                doc.setTextColor(255, 0, 0);
+                doc.text(`${index + 1}. ${violation.type.toUpperCase()} VIOLATION`, 14, y);
+                
+                // Violation details
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                y += 7;
+                doc.text(`Time: ${new Date(violation.timestamp).toLocaleString()}`, 20, y);
+                
+                if (violation.speed) {
+                    y += 7;
+                    doc.text(`Speed: ${violation.speed} km/h`, 20, y);
+                }
+                
+                if (violation.plateNumber) {
+                    y += 7;
+                    doc.text(`Plate: ${violation.plateNumber}`, 20, y);
+                }
+                
+                if (violation.vehicleDetails) {
+                    y += 7;
+                    doc.text(`Vehicle: ${violation.vehicleDetails.make} ${violation.vehicleDetails.model}`, 20, y);
+                    y += 7;
+                    doc.text(`Color: ${violation.vehicleDetails.color} | Year: ${violation.vehicleDetails.year}`, 20, y);
+                }
+                
+                y += 10;
+                doc.line(15, y, 195, y);
+                y += 5;
+            });
+            
+            // Save PDF
+            doc.save(`traffic_violations_${new Date().toISOString().slice(0, 10)}.pdf`);
+        }
+        
+        // Event listeners
+        document.getElementById('exportBtn').addEventListener('click', exportToCSV);
+        document.getElementById('exportPdfBtn').addEventListener('click', generatePDF);
+        document.getElementById('searchInput').addEventListener('input', searchViolations);
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadViolations);
+    </script>
+</body>
+</html>
